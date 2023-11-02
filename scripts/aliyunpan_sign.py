@@ -28,7 +28,8 @@ SIGN_LOG_FILE = os.path.join(work_path, SIGN_LOG)
 logger.add(SIGN_LOG_FILE, encoding='utf8')
 
 # 请在阿里云盘网页端获取：JSON.parse(localStorage.getItem("token")).refresh_token
-refresh_token = ""
+#refresh_token = ""
+refresh_token = os.environ['refresh_token']
 if refresh_token is None:
     logger.error("请先在环境变量里添加阿里云盘的refresh_token")
     exit(0)
@@ -43,6 +44,7 @@ def post_msg(url: str, data: dict) -> bool:
 
 def get_access_token(token):
     access_token = ''
+    nick_name = ''
     try:
         url = "https://auth.aliyundrive.com/v2/account/token"
 
@@ -72,9 +74,10 @@ def get_access_token(token):
         token['access_token'] = resp_json.get('access_token', "")
         token['refresh_token'] = resp_json.get('refresh_token', "")
         token['expire_time'] = resp_json.get('expire_time', "")
+        token['nick_name'] = resp_json.get('nick_name', "")        
         logger.info(
-            f"获取得到新的access_token={token['access_token'][:10]}......,新的refresh_token={token['refresh_token']},过期时间={token['expire_time']}")
-        access_token = token['access_token']
+            f"【{token['nick_name']}】获取得到新的access_token={token['access_token'][:10]}......,新的refresh_token={token['refresh_token']},过期时间={token['expire_time']}")
+        access_token = token['access_token']       
     except:
         logger.error(f"获取异常:{traceback.format_exc()}")
 
@@ -86,6 +89,7 @@ class ALiYunPan(object):
         # 获取JSON.parse(localStorage.getItem("token")).access_token
         # 请自行更新填写access_token，有效期7200s
         self.access_token = access_token
+    
 
     def sign_in(self):
         sign_in_days_lists = []
@@ -202,7 +206,7 @@ def main():
     else:
         tokens = [refresh_token]
     for token in tokens:
-        access_token = get_access_token(token)
+        access_token = get_access_token(token)        
         if access_token:
             ali = ALiYunPan(access_token)
             ali.sign_in()
